@@ -15,7 +15,8 @@ export const uploadOnCloudinary = async (filePath) => {
         const result = await cloudinary.uploader.upload(filePath, {
             resource_type: "image"
         });
-        console.log(result)
+
+        fs.unlinkSync(filePath);
 
         return result;
     }

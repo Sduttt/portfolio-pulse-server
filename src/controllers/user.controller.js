@@ -5,8 +5,11 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 export const registerUser = asyncHandler(async (req, res) => {
 
     // get  user detaills from req.body
-    const { email, fullName, password, avatar, profession, bio, dateOfBirth, gender, address } = req.body;
-    const { city, country } = address || {};
+    const { email, fullName, password, avatar, profession, bio, dateOfBirth, gender } = req.body;
+    const address = typeof req.body.address === "string"
+        ? JSON.parse(req.body.address)
+        : req.body.address || {};
+    const { city, country } = address;
     
 
     // validate user detaills
@@ -64,15 +67,13 @@ export const registerUser = asyncHandler(async (req, res) => {
     }
 
     // Check if user already exists
-
-    User.findOne({ email }).then((existingUser) => {
-        if (existingUser) {
-            return res.status(409).json({
-                success: false,
-                message: "Email is already registered",
-            });
-        }
-    });
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+        return res.status(409).json({
+            success: false,
+            message: "Email is already registered",
+        });
+    }
 
     // Check for avatar and upload to cloudinary
     let avatarUrl = "";
