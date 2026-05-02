@@ -4,14 +4,6 @@ import jwt from "jsonwebtoken";
 
 const userSchema = new Schema(
     {
-        userId: {
-            type: String,
-            required: true,
-            unique: true,
-            trim: true,
-            lowercase: true,
-            index: true,
-        },
         email: {
             type: String,
             required: [true, "Email is required"],
@@ -46,7 +38,7 @@ const userSchema = new Schema(
         },
         gender: {
             type: String,
-            enum: ["Male", "Female", "Other"],
+            enum: ["male", "female", "other"],
             required: [true, "Gender is required"],
         },
         address: {
@@ -70,12 +62,11 @@ const userSchema = new Schema(
     }
 );
 
-userSchema.pre("save", async function (next){
+userSchema.pre("save", async function (){
     if(!this.isModified("passwordHash")){
-        return next();
+        return;
     }
     this.passwordHash = await bcrypt.hash(this.passwordHash, 10);
-    next();
 } )
 
 userSchema.methods.comparePassword = async function (password){
