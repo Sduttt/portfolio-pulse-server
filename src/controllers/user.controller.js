@@ -1,6 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import jwt from "jsonwebtoken";
 
 const generateAccesssAndRefreshTokens = async (userId) => {
     try {
@@ -212,11 +213,11 @@ const logoutUser = asyncHandler(async (req, res) => {
         {
             $set: {
                 refreshToken: "",
-            }
+            },
         },
         {
             new: true,
-        }
+        },
     );
 
     const cookieOptions = {
@@ -234,4 +235,59 @@ const logoutUser = asyncHandler(async (req, res) => {
         });
 });
 
-export { registerUser, loginUser, logoutUser };
+const refreshAccessToken = asyncHandler(async (req, res) => {
+    const incomingRefreshToken =
+        req.cookies.refreshToken ||
+        req.body.refreshToken ||
+        req.headers["x-refresh-token"];
+
+    if (!incomingRefreshToken) {
+        return res.status(400).json({
+            success: false,
+            message: "Unauthorized: No refresh token provided",
+        });
+    }
+
+    try {
+        const decodedToken = jwt.verify(
+            incomingRefreshToken,
+            process.env.REFRESH_TOKEN_SECRET,
+        );
+
+        const user = await User.findById(decodedToken.userId);
+
+        if (!user || user.refreshToken !== incomingRefreshToken) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized: Invalid refresh token",
+            });
+        }
+
+        const cookiesOptions = {
+            httpOnly: true,
+            secure: true,
+        };
+
+        const { accessToken, newRefreshToken } =
+            await generateAccesssAndRefreshTokens(user._id);
+
+        return res
+            .status(200)
+            .cookie("accessToken", accessToken, cookiesOptions)
+            .cookie("refreshToken", newRefreshToken, cookiesOptions)
+            .json({
+                success: true,
+                message: "Access token refreshed successfully",
+                data: {
+                    accessToken,
+                },
+            });
+    } catch (error) {
+        return res.status(401).json({
+            success: false,
+            message: "Unauthorized: Invalid refresh token",
+        });
+    }
+});
+
+export { registerUser, loginUser, logoutUser, refreshAccessToken };
