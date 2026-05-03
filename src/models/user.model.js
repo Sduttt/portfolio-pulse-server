@@ -59,45 +59,43 @@ const userSchema = new Schema(
     },
     {
         timestamps: true,
-    }
+    },
 );
 
-userSchema.pre("save", async function (){
-    if(!this.isModified("passwordHash")){
+userSchema.pre("save", async function () {
+    if (!this.isModified("passwordHash")) {
         return;
     }
     this.passwordHash = await bcrypt.hash(this.passwordHash, 10);
-} )
+});
 
-userSchema.methods.comparePassword = async function (password){
+userSchema.methods.comparePassword = async function (password) {
     return await bcrypt.compare(password, this.passwordHash);
-}
+};
 
-userSchema.methods.generateAccessToken = function (){
+userSchema.methods.generateAccessToken = function () {
     return jwt.sign(
-        { 
-            userId: this.userId, 
-            email: this.email 
+        {
+            userId: this._id,
+            email: this.email,
         },
         process.env.JWT_SECRET,
-        { 
-            expiresIn: process.env.JWT_EXPIRES_IN
-        }
+        {
+            expiresIn: process.env.JWT_EXPIRES_IN,
+        },
     );
+};
 
-}
-
-userSchema.methods.generateRefreshToken = function (){
+userSchema.methods.generateRefreshToken = function () {
     return jwt.sign(
-        { 
-            userId: this.userId
+        {
+            userId: this._id,
         },
         process.env.REFRESH_TOKEN_SECRET,
-        { 
-            expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN
-        }
+        {
+            expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN,
+        },
     );
-}
-
+};
 
 export const User = mongoose.model("User", userSchema);

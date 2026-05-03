@@ -30,11 +30,11 @@ const tradeSchema = new Schema(
         tradeType: {
             type: String,
             enum: ["Buy", "Sell"],
-            required: [true, "Trade type is required"]
+            required: [true, "Trade type is required"],
         },
         quantity: {
             type: Number,
-            required: [true, "Quantity is required"]
+            required: [true, "Quantity is required"],
         },
         currency: {
             type: String,
@@ -43,16 +43,16 @@ const tradeSchema = new Schema(
         },
         pricePerUnit: {
             type: Number,
-            required: [true, "Price per unit is required"]
+            required: [true, "Price per unit is required"],
         },
         tradeDate: {
             type: Date,
-            required: [true, "Trade date is required"]
+            required: [true, "Trade date is required"],
         },
         reason: {
             type: String,
             trim: true,
-        }
+        },
     },
     {
         timestamps: true,

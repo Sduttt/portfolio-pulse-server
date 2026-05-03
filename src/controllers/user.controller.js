@@ -2,15 +2,43 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
-export const registerUser = asyncHandler(async (req, res) => {
+const generateAccesssAndRefreshTokens = async (userId) => {
+    try {
+        const user = await User.findById(userId);
 
+        if (!user) {
+            throw new Error("User not found");
+        }
+
+        const accessToken = user.generateAccessToken();
+        const refreshToken = user.generateRefreshToken();
+
+        user.refreshToken = refreshToken;
+        await user.save({ validateBeforeSave: false });
+
+        return { accessToken, refreshToken };
+    } catch (error) {
+        throw new Error("Failed to generate tokens: " + error.message);
+    }
+};
+
+const registerUser = asyncHandler(async (req, res) => {
     // get  user detaills from req.body
-    const { email, fullName, password, avatar, profession, bio, dateOfBirth, gender } = req.body;
-    const address = typeof req.body.address === "string"
-        ? JSON.parse(req.body.address)
-        : req.body.address || {};
+    const {
+        email,
+        fullName,
+        password,
+        avatar,
+        profession,
+        bio,
+        dateOfBirth,
+        gender,
+    } = req.body;
+    const address =
+        typeof req.body.address === "string"
+            ? JSON.parse(req.body.address)
+            : req.body.address || {};
     const { city, country } = address;
-    
 
     // validate user detaills
 
@@ -83,7 +111,6 @@ export const registerUser = asyncHandler(async (req, res) => {
         avatarUrl = uploadResult?.secure_url || "";
     }
 
-
     // save user to database
 
     const newUser = await User.create({
@@ -98,11 +125,13 @@ export const registerUser = asyncHandler(async (req, res) => {
         gender,
         address: {
             city,
-            country
-        }
+            country,
+        },
     });
 
-    const createdUser = await User.findById(newUser._id).select("-passwordHash -refreshToken");
+    const createdUser = await User.findById(newUser._id).select(
+        "-passwordHash -refreshToken",
+    );
 
     if (!createdUser) {
         return res.status(500).json({
@@ -117,6 +146,92 @@ export const registerUser = asyncHandler(async (req, res) => {
         message: "User registered successfully",
         data: createdUser,
     });
+});
 
-})
+const loginUser = asyncHandler(async (req, res) => {
+    const { email, password } = req.body;
 
+    if (!email || !password) {
+        return res.status(400).json({
+            success: false,
+            message: "Email and password are required",
+        });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+        return res.status(401).json({
+            success: false,
+            message: "Invalid email or password",
+        });
+    }
+
+    const isPasswordValid = await user.comparePassword(password);
+
+    if (!isPasswordValid) {
+        return res.status(401).json({
+            success: false,
+            message: "Invalid email or password",
+        });
+    }
+
+    const { accessToken, refreshToken } = await generateAccesssAndRefreshTokens(
+        user._id,
+    );
+
+    const loggedInUser = await User.findById(user._id).select(
+        "-passwordHash -refreshToken",
+    );
+
+    const cookieOptions = {
+        httpOnly: true,
+        secure: true,
+    };
+
+    return res
+        .status(200)
+        .cookie("accessToken", accessToken, cookieOptions)
+        .cookie("refreshToken", refreshToken, cookieOptions)
+        .json({
+            success: true,
+            message: "User logged in successfully",
+            data: {
+                user: loggedInUser,
+                accessToken,
+                refreshToken,
+            },
+        });
+
+    //send cookie with refresh token
+});
+
+const logoutUser = asyncHandler(async (req, res) => {
+    await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set: {
+                refreshToken: "",
+            }
+        },
+        {
+            new: true,
+        }
+    );
+
+    const cookieOptions = {
+        httpOnly: true,
+        secure: true,
+    };
+
+    return res
+        .status(200)
+        .clearCookie("accessToken", cookieOptions)
+        .clearCookie("refreshToken", cookieOptions)
+        .json({
+            success: true,
+            message: "User logged out successfully",
+        });
+});
+
+export { registerUser, loginUser, logoutUser };

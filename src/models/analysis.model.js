@@ -23,12 +23,12 @@ const analysisSchema = new Schema(
         },
         rationalityScore: {
             type: Number,
-            min: [0, 'Score cannot be less than 0'],
-            max: [100, 'Score cannot exceed 100']
+            min: [0, "Score cannot be less than 0"],
+            max: [100, "Score cannot exceed 100"],
         },
         ai_feedback: {
-            type: String
-        }
+            type: String,
+        },
     },
     {
         timestamps: true,
