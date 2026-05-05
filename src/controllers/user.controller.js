@@ -1,6 +1,9 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { User } from "../models/user.model.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import {
+    uploadOnCloudinary,
+    deleteFromCloudinary,
+} from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
 
 const generateAccesssAndRefreshTokens = async (userId) => {
@@ -290,4 +293,190 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     }
 });
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken };
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+        return res.status(400).json({
+            success: false,
+            message: "Current password and new password are required",
+        });
+    }
+
+    if(currentPassword === newPassword) {
+        return res.status(400).json({
+            success: false,
+            message: "New password must be different from current password",
+        });
+    }
+
+    if (newPassword.length < 8) {
+        return res.status(400).json({
+            success: false,
+            message: "New password must be at least 8 characters long",
+        });
+    }
+
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+        return res.status(404).json({
+            success: false,
+            message: "User not found",
+        });
+    }
+
+    const isCurrentPasswordValid = await user.comparePassword(currentPassword);
+
+    if (!isCurrentPasswordValid) {
+        return res.status(401).json({
+            success: false,
+            message: "Current password is incorrect",
+        });
+    }
+
+    user.passwordHash = newPassword;
+    await user.save({ validateBeforeSave: false });
+
+    return res.status(200).json({
+        success: true,
+        message: "Password changed successfully",
+    });
+});
+
+const getUserProfile = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id).select(
+        "-passwordHash -refreshToken",
+    );
+
+    if (!user) {
+        return res.status(404).json({
+            success: false,
+            message: "User not found",
+        });
+    }
+
+    return res.status(200).json({
+        success: true,
+        message: "User profile retrieved successfully",
+        data: user,
+    });
+});
+
+const updateUserProfile = asyncHandler(async (req, res) => {
+    const { fullName, profession, bio, dateOfBirth, gender, address } =
+        req.body;
+
+    const user = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set: {
+                fullName,
+                profession,
+                bio,
+                dateOfBirth,
+                gender,
+                address,
+            },
+        },
+        { new: true },
+    ).select("-passwordHash -refreshToken");
+
+    if (!user) {
+        return res.status(404).json({
+            success: false,
+            message: "User not found",
+        });
+    }
+
+    return res.status(200).json({
+        success: true,
+        message: "User profile updated successfully",
+        data: user,
+    });
+});
+
+const updateAvatar = asyncHandler(async (req, res) => {
+    const avatarLocalPath = req.file?.path;
+
+    if (!avatarLocalPath) {
+        return res.status(400).json({
+            success: false,
+            message: "No avatar file uploaded",
+        });
+    }
+
+    const uploadResult = await uploadOnCloudinary(avatarLocalPath);
+
+    if (!uploadResult) {
+        return res.status(500).json({
+            success: false,
+            message: "Failed to upload avatar",
+        });
+    }
+
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+        return res.status(404).json({
+            success: false,
+            message: "User not found",
+        });
+    }
+
+    if (user?.avatar) {
+        await deleteFromCloudinary(user.avatar);
+    }
+
+    user.avatar = uploadResult.secure_url;
+    await user.save({ validateBeforeSave: false });
+
+    return res.status(200).json({
+        success: true,
+        message: "Avatar updated successfully",
+        data: user,
+    });
+});
+
+const deleteUser = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+        return res.status(404).json({
+            success: false,
+            message: "User not found",
+        });
+    }
+
+    
+    await Promise.all([
+        deleteFromCloudinary(user.avatar),
+        User.deleteOne({ _id: req.user._id })
+    ]);
+
+    const cookieOptions = {
+        httpOnly: true,
+        secure: true,
+    };
+    
+    return res.status(200)
+    .clearCookie("accessToken", cookieOptions)
+    .clearCookie("refreshToken", cookieOptions)
+    .json({
+        success: true,
+        message: "User deleted successfully",
+        data: user,
+    });
+});
+
+export {
+    registerUser,
+    loginUser,
+    logoutUser,
+    refreshAccessToken,
+    changeCurrentPassword,
+    getUserProfile,
+    updateUserProfile,
+    updateAvatar,
+    deleteUser,
+};
