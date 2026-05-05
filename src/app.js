@@ -19,9 +19,11 @@ app.use(cookieParser());
 // Route Imports
 
 import userRoutes from "./routes/user.routes.js";
+import tradeRoutes from "./routes/trade.routes.js";
 
-// Rotes Declaration
+// Routes Declaration
 
-app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/user", userRoutes);
+app.use("/api/v1/trade", tradeRoutes);
 
 export { app };

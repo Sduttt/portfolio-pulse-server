@@ -2,14 +2,6 @@ import mongoose, { Schema } from "mongoose";
 
 const tradeSchema = new Schema(
     {
-        tradeId: {
-            type: String,
-            required: true,
-            unique: true,
-            trim: true,
-            lowercase: true,
-            index: true,
-        },
         userId: {
             type: String,
             required: true,
@@ -59,4 +51,4 @@ const tradeSchema = new Schema(
     },
 );
 
-export const Trades = mongoose.model("Trade", tradeSchema);
+export const Trade = mongoose.model("Trade", tradeSchema);
