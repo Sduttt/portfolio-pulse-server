@@ -102,4 +102,45 @@ const getAnalysisByTradeId = asyncHandler(async (req, res) => {
     });
 });
 
-export { analyzeTradeById, getAnalysisByTradeId };
+const giveFeedbackToAnalysis = asyncHandler(async (req, res) => {
+    const userId = req.user._id;
+    const tradeId = req.params.id;
+    const { users_response_to_ai, users_feedback } = req.body;
+
+    if (!mongoose.isValidObjectId(tradeId)) {
+        return res.status(400).json({
+            success: false,
+            message: "Invalid trade ID.",
+        });
+    }
+
+    // Ensure the trade belongs to the requesting user
+    const trade = await Trade.findOne({ _id: tradeId, userId });
+    if (!trade) {
+        return res.status(404).json({
+            success: false,
+            message: "Trade not found.",
+        });
+    }
+
+    const analysis = await Analysis.findOne({ tradeId });
+    if (!analysis) {
+        return res.status(404).json({
+            success: false,
+            message: "No analysis found for this trade. Run analysis first.",
+        });
+    }
+
+    analysis.users_response_to_ai = users_response_to_ai || analysis.users_response_to_ai;
+    analysis.users_feedback = users_feedback || analysis.users_feedback;
+
+    await analysis.save();
+
+    return res.status(200).json({
+        success: true,
+        data: analysis,
+    });
+});
+
+export { analyzeTradeById, getAnalysisByTradeId, giveFeedbackToAnalysis };
+

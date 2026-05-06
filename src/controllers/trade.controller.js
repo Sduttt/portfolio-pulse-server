@@ -1,5 +1,6 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { Trade } from "../models/trade.model.js";
+import { Analysis } from "../models/analysis.model.js";
 import mongoose from "mongoose";
 
 const addTrade = asyncHandler(async (req, res) => {
@@ -206,6 +207,7 @@ const deleteTrade = asyncHandler(async (req, res) => {
         });
     }
 
+    await Analysis.deleteMany({ tradeId: trade._id });
     await Trade.deleteOne({ _id: tradeId, userId });
 
     res.status(200).json({

@@ -1,5 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { User } from "../models/user.model.js";
+import { Trade } from "../models/trade.model.js";
+import { Analysis } from "../models/analysis.model.js";
 import {
     uploadOnCloudinary,
     deleteFromCloudinary,
@@ -448,8 +450,14 @@ const deleteUser = asyncHandler(async (req, res) => {
         });
     }
 
+    const trades = await Trade.find({ userId: req.user._id });
+
     await Promise.all([
         deleteFromCloudinary(user.avatar),
+        ...trades.map((trade) =>
+            Analysis.deleteMany({ tradeId: trade._id })
+        ),
+        Trade.deleteMany({ userId: req.user._id }),
         User.deleteOne({ _id: req.user._id }),
     ]);
 

@@ -21,6 +21,14 @@ const analysisSchema = new Schema(
         ai_feedback: {
             type: String,
         },
+        users_response_to_ai: {
+            type: String,
+            enum: ["Like", "Dislike", "Neutral"],
+            default: "Neutral",
+        },
+        users_feedback: {
+            type: String,
+        }
     },
     {
         timestamps: true,
