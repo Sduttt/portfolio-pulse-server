@@ -2,14 +2,6 @@ import mongoose, { Schema } from "mongoose";
 
 const analysisSchema = new Schema(
     {
-        analysisId: {
-            type: String,
-            required: true,
-            unique: true,
-            trim: true,
-            lowercase: true,
-            index: true,
-        },
         tradeId: {
             type: String,
             required: true,
@@ -19,7 +11,7 @@ const analysisSchema = new Schema(
         },
         sentiment: {
             type: String,
-            enum: ["Rational, Emotional", "FOMO", "Panic", "Greed", "Fear"],
+            enum: ["Rational", "Emotional", "FOMO", "Panic", "Greed", "Fear"],
         },
         rationalityScore: {
             type: Number,

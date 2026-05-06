@@ -15,7 +15,6 @@ router
     .post(verifyAccessToken, addTrade)
     .get(verifyAccessToken, getTrades);
 
-    
 router
     .route("/:id")
     .get(verifyAccessToken, getTradeById)

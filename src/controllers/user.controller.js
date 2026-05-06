@@ -303,7 +303,7 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
         });
     }
 
-    if(currentPassword === newPassword) {
+    if (currentPassword === newPassword) {
         return res.status(400).json({
             success: false,
             message: "New password must be different from current password",
@@ -448,25 +448,25 @@ const deleteUser = asyncHandler(async (req, res) => {
         });
     }
 
-    
     await Promise.all([
         deleteFromCloudinary(user.avatar),
-        User.deleteOne({ _id: req.user._id })
+        User.deleteOne({ _id: req.user._id }),
     ]);
 
     const cookieOptions = {
         httpOnly: true,
         secure: true,
     };
-    
-    return res.status(200)
-    .clearCookie("accessToken", cookieOptions)
-    .clearCookie("refreshToken", cookieOptions)
-    .json({
-        success: true,
-        message: "User deleted successfully",
-        data: user,
-    });
+
+    return res
+        .status(200)
+        .clearCookie("accessToken", cookieOptions)
+        .clearCookie("refreshToken", cookieOptions)
+        .json({
+            success: true,
+            message: "User deleted successfully",
+            data: user,
+        });
 });
 
 export {

@@ -20,10 +20,12 @@ app.use(cookieParser());
 
 import userRoutes from "./routes/user.routes.js";
 import tradeRoutes from "./routes/trade.routes.js";
+import analysisRoutes from "./routes/analysis.routes.js";
 
 // Routes Declaration
 
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/trade", tradeRoutes);
+app.use("/api/v1/analysis", analysisRoutes);
 
 export { app };

@@ -11,7 +11,7 @@ export const deleteFromCloudinary = async (imageUrl) => {
     if (!imageUrl) return null;
 
     // URL format: https://res.cloudinary.com/{cloud}/image/upload/v{ver}/{public_id}.{ext}
-    
+
     const urlParts = imageUrl.split("/");
     const uploadIndex = urlParts.indexOf("upload");
     if (uploadIndex === -1) return null;

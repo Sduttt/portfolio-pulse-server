@@ -24,7 +24,9 @@ router.route("/logout").post(verifyAccessToken, logoutUser);
 
 router.route("/refresh-token").post(refreshAccessToken);
 
-router.route("/change-password").patch(verifyAccessToken, changeCurrentPassword);
+router
+    .route("/change-password")
+    .patch(verifyAccessToken, changeCurrentPassword);
 
 router.route("/profile").get(verifyAccessToken, getUserProfile);
 router.route("/profile").patch(verifyAccessToken, updateUserProfile);

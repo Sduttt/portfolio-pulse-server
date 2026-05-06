@@ -5,17 +5,32 @@ import mongoose from "mongoose";
 const addTrade = asyncHandler(async (req, res) => {
     const userId = req.user._id;
     const {
-        assetName, ticker, tradeType, quantity, currency, pricePerUnit, tradeDate, reason
+        assetName,
+        ticker,
+        tradeType,
+        quantity,
+        currency,
+        pricePerUnit,
+        tradeDate,
+        reason,
     } = req.body;
 
-    if(!userId) {
+    if (!userId) {
         return res.status(404).json({
             success: false,
             message: "User not found. Please login to add a trade.",
         });
     }
 
-    if(!assetName || !ticker || !tradeType || !quantity || !currency || !pricePerUnit || !tradeDate) {
+    if (
+        !assetName ||
+        !ticker ||
+        !tradeType ||
+        !quantity ||
+        !currency ||
+        !pricePerUnit ||
+        !tradeDate
+    ) {
         return res.status(400).json({
             success: false,
             message: "All fields are required to add a trade.",
@@ -34,7 +49,7 @@ const addTrade = asyncHandler(async (req, res) => {
         reason,
     });
 
-    if(!newTrade) {
+    if (!newTrade) {
         return res.status(500).json({
             success: false,
             message: "Failed to add trade. Please try again.",
@@ -50,19 +65,24 @@ const addTrade = asyncHandler(async (req, res) => {
 const getTrades = asyncHandler(async (req, res) => {
     const userId = req.user._id;
 
-    if(!userId) {
+    if (!userId) {
         return res.status(404).json({
             success: false,
             message: "User not found. Please login to view trades.",
         });
     }
 
-    const trades = await Trade.find({ userId }).sort({ tradeDate: -1 }).select("assetName ticker tradeType quantity currency pricePerUnit tradeDate");
+    const trades = await Trade.find({ userId })
+        .sort({ tradeDate: -1 })
+        .select(
+            "assetName ticker tradeType quantity currency pricePerUnit tradeDate",
+        );
 
-    if(trades.length === 0) {
+    if (trades.length === 0) {
         return res.status(200).json({
             success: true,
-            message: "No trades found. Start adding your trades to see them here.",
+            message:
+                "No trades found. Start adding your trades to see them here.",
             data: [],
         });
     }
@@ -78,7 +98,7 @@ const getTradeById = asyncHandler(async (req, res) => {
     const userId = req.user._id;
     const tradeId = req.params.id;
 
-    if(!userId) {
+    if (!userId) {
         return res.status(404).json({
             success: false,
             message: "User not found. Please login to view trade details.",
@@ -87,10 +107,11 @@ const getTradeById = asyncHandler(async (req, res) => {
 
     const trade = await Trade.findOne({ _id: tradeId, userId }).select("-__v");
 
-    if(!trade) {
+    if (!trade) {
         return res.status(404).json({
             success: false,
-            message: "Trade not found. Please check the trade ID and try again.",
+            message:
+                "Trade not found. Please check the trade ID and try again.",
         });
     }
 
@@ -104,10 +125,17 @@ const updateTrade = asyncHandler(async (req, res) => {
     const userId = req.user._id;
     const tradeId = req.params.id;
     const {
-        assetName, ticker, tradeType, quantity, currency, pricePerUnit, tradeDate, reason
+        assetName,
+        ticker,
+        tradeType,
+        quantity,
+        currency,
+        pricePerUnit,
+        tradeDate,
+        reason,
     } = req.body;
 
-    if(!userId) {
+    if (!userId) {
         return res.status(404).json({
             success: false,
             message: "User not found. Please login to update trade details.",
@@ -117,16 +145,18 @@ const updateTrade = asyncHandler(async (req, res) => {
     if (!mongoose.isValidObjectId(tradeId)) {
         return res.status(400).json({
             success: false,
-            message: "Invalid trade ID. Please check the trade ID and try again.",
+            message:
+                "Invalid trade ID. Please check the trade ID and try again.",
         });
     }
 
     const trade = await Trade.findOne({ _id: tradeId, userId });
 
-    if(!trade) {
+    if (!trade) {
         return res.status(404).json({
             success: false,
-            message: "Trade not found. Please check the trade ID and try again.",
+            message:
+                "Trade not found. Please check the trade ID and try again.",
         });
     }
 
@@ -151,7 +181,7 @@ const deleteTrade = asyncHandler(async (req, res) => {
     const userId = req.user._id;
     const tradeId = req.params.id;
 
-    if(!userId) {
+    if (!userId) {
         return res.status(404).json({
             success: false,
             message: "User not found. Please login to delete trade.",
@@ -161,16 +191,18 @@ const deleteTrade = asyncHandler(async (req, res) => {
     if (!mongoose.isValidObjectId(tradeId)) {
         return res.status(400).json({
             success: false,
-            message: "Invalid trade ID. Please check the trade ID and try again.",
+            message:
+                "Invalid trade ID. Please check the trade ID and try again.",
         });
     }
 
     const trade = await Trade.findOne({ _id: tradeId, userId });
 
-    if(!trade) {
+    if (!trade) {
         return res.status(404).json({
             success: false,
-            message: "Trade not found. Please check the trade ID and try again.",
+            message:
+                "Trade not found. Please check the trade ID and try again.",
         });
     }
 
