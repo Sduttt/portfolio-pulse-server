@@ -585,6 +585,58 @@ const verifyEmail = asyncHandler(async (req, res) => {
         user.emailVerified = true;
         await user.save({ validateBeforeSave: false });
 
+        // Send welcome/verified confirmation email (non-blocking)
+        const welcomeSubject = "Your email has been verified — Welcome to Portfolio Pulse!";
+        const welcomeText = `Hi ${user.fullName}, your email has been verified successfully. You can now subscribe and start using AI-powered trade analysis.`;
+        const welcomeHtml = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f9f9f9; padding: 40px 20px;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px 12px 0 0; padding: 32px; text-align: center;">
+                    <h1 style="color: white; margin: 0; font-size: 26px;">Portfolio Pulse</h1>
+                    <p style="color: rgba(255,255,255,0.85); margin: 8px 0 0; font-size: 14px;">Email Verified Successfully</p>
+                </div>
+                <div style="background: white; border-radius: 0 0 12px 12px; padding: 36px; box-shadow: 0 4px 16px rgba(0,0,0,0.08);">
+                    <div style="text-align: center; margin-bottom: 24px;">
+                        <div style="display: inline-block; background: #e6f9f0; border-radius: 50%; width: 64px; height: 64px; line-height: 64px; font-size: 32px;">✅</div>
+                    </div>
+                    <p style="color: #333; font-size: 16px; margin: 0 0 8px;">Hi <strong>${user.fullName}</strong>,</p>
+                    <p style="color: #555; font-size: 14px; line-height: 1.6; margin: 0 0 28px;">
+                        Your email address has been verified successfully. Your account is now fully activated.
+                    </p>
+                    <div style="background: #f4f4f4; border-radius: 8px; padding: 20px; margin-bottom: 28px;">
+                        <h3 style="color: #444; font-size: 14px; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 0.8px;">Account Details</h3>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 8px 0; color: #888; font-size: 13px; width: 40%;">Name</td>
+                                <td style="padding: 8px 0; color: #333; font-size: 13px; font-weight: bold; text-align: right;">${user.fullName}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px 0; color: #888; font-size: 13px; border-top: 1px solid #e0e0e0;">Email</td>
+                                <td style="padding: 8px 0; color: #333; font-size: 13px; text-align: right; border-top: 1px solid #e0e0e0;">${user.email}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px 0; color: #888; font-size: 13px; border-top: 1px solid #e0e0e0;">Status</td>
+                                <td style="padding: 8px 0; text-align: right; border-top: 1px solid #e0e0e0;">
+                                    <span style="background: #e6f9f0; color: #27ae60; font-size: 12px; font-weight: bold; padding: 3px 10px; border-radius: 20px;">VERIFIED</span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <p style="color: #555; font-size: 14px; line-height: 1.6; margin: 0 0 24px;">
+                        You can now subscribe to get access to AI-powered trade analysis and portfolio insights.
+                    </p>
+                    <div style="text-align: center; margin-bottom: 24px;">
+                        <a href="${process.env.FRONTEND_URL}/subscription" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 36px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 15px;">Get Started</a>
+                    </div>
+                    <p style="color: #aaa; font-size: 12px; line-height: 1.6; margin: 0; padding-top: 20px; border-top: 1px solid #eee;">
+                        If you didn't create this account, please ignore this email.
+                    </p>
+                </div>
+            </div>
+        `;
+        sendEmail(user.email, welcomeSubject, welcomeText, welcomeHtml).catch(
+            (err) => console.error("Failed to send verification confirmed email:", err)
+        );
+
         return res.status(200).json({
             success: true,
             message: "Email verified successfully",

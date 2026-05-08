@@ -25,14 +25,7 @@ const analyzeTradeById = asyncHandler(async (req, res) => {
     }
 
     // Return cached analysis if it already exists for this trade
-    const existing = await Analysis.findOne({ tradeId });
-    if (existing) {
-        return res.status(200).json({
-            success: true,
-            cached: true,
-            data: existing,
-        });
-    }
+    
 
     let aiResult;
     try {
@@ -53,6 +46,21 @@ const analyzeTradeById = asyncHandler(async (req, res) => {
     }
 
     const { sentiment, rationalityScore, feedback } = aiResult;
+
+    const existing = await Analysis.findOne({ tradeId });
+    if (existing) {
+        const analysis = await Analysis.findByIdAndUpdate(
+            existing._id,
+            { sentiment, rationalityScore, ai_feedback: feedback },
+            { new: true },
+        );
+        
+        return res.status(200).json({
+            success: true,
+            cached: true,
+            data: analysis,
+        });
+    }
 
     const analysis = await Analysis.create({
         tradeId,
