@@ -12,7 +12,7 @@ const transporter = nodemailer.createTransport({
 const sendEmail = async (to, subject, text, html) => {
     try {
         const info = await transporter.sendMail({
-            from: `"<Portfolio Pulse>" <${process.env.SMTP_USER}>`,
+            from: `"Portfolio Pulse" <${process.env.SMTP_USER}>`,
             to,
             subject,
             text,

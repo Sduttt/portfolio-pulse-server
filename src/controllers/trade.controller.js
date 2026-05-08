@@ -27,7 +27,8 @@ const addTrade = asyncHandler(async (req, res) => {
     if (!isEmailVerified) {
         return res.status(403).json({
             success: false,
-            message: "Email not verified. Please verify your email to add a trade.",
+            message:
+                "Email not verified. Please verify your email to add a trade.",
         });
     }
 

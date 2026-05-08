@@ -2,6 +2,9 @@ import mongoose from "mongoose";
 import { DB_NAME } from "../constants.js";
 
 export const connectDB = async () => {
+    // Reuse existing connection on warm serverless invocations
+    if (mongoose.connection.readyState >= 1) return;
+
     try {
         const connectionInstance = await mongoose.connect(
             `${process.env.MONGODB_URI}/${DB_NAME}`,
@@ -12,6 +15,6 @@ export const connectDB = async () => {
         );
     } catch (error) {
         console.error("Error connecting to MongoDB:", error);
-        process.exit(1);
+        throw error;
     }
 };

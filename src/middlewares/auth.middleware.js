@@ -42,3 +42,24 @@ export const verifyAccessToken = asyncHandler(async (req, res, next) => {
         });
     }
 });
+
+export const requireEmailVerified = (req, res, next) => {
+    if (!req.user?.emailVerified) {
+        return res.status(403).json({
+            success: false,
+            message: "Please verify your email before subscribing",
+        });
+    }
+    next();
+};
+
+export const requireSubscription = (req, res, next) => {
+    if (!req.user?.subscriptionStatus) {
+        return res.status(403).json({
+            success: false,
+            message:
+                "An active subscription is required to access this feature",
+        });
+    }
+    next();
+};
