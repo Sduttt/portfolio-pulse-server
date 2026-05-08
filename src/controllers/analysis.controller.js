@@ -51,7 +51,7 @@ const analyzeTradeById = asyncHandler(async (req, res) => {
     if (existing) {
         const analysis = await Analysis.findByIdAndUpdate(
             existing._id,
-            { sentiment, rationalityScore, ai_feedback: feedback },
+            { userId, sentiment, rationalityScore, ai_feedback: feedback },
             { new: true },
         );
         
@@ -63,6 +63,7 @@ const analyzeTradeById = asyncHandler(async (req, res) => {
     }
 
     const analysis = await Analysis.create({
+        userId,
         tradeId,
         sentiment,
         rationalityScore,

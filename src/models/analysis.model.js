@@ -9,6 +9,12 @@ const analysisSchema = new Schema(
             lowercase: true,
             index: true,
         },
+        userId: {
+            type: Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+            index: true,
+        },
         sentiment: {
             type: String,
             enum: ["Rational", "Emotional", "FOMO", "Panic", "Greed", "Fear"],
