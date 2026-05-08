@@ -28,4 +28,15 @@ app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/trade", tradeRoutes);
 app.use("/api/v1/analysis", analysisRoutes);
 
+// Handle malformed JSON bodies
+app.use((err, req, res, next) => {
+    if (err.type === "entity.parse.failed") {
+        return res.status(400).json({
+            success: false,
+            message: "Invalid JSON in request body",
+        });
+    }
+    next(err);
+});
+
 export { app };

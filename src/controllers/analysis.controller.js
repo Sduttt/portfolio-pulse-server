@@ -131,7 +131,8 @@ const giveFeedbackToAnalysis = asyncHandler(async (req, res) => {
         });
     }
 
-    analysis.users_response_to_ai = users_response_to_ai || analysis.users_response_to_ai;
+    analysis.users_response_to_ai =
+        users_response_to_ai || analysis.users_response_to_ai;
     analysis.users_feedback = users_feedback || analysis.users_feedback;
 
     await analysis.save();
@@ -143,4 +144,3 @@ const giveFeedbackToAnalysis = asyncHandler(async (req, res) => {
 });
 
 export { analyzeTradeById, getAnalysisByTradeId, giveFeedbackToAnalysis };
-

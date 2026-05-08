@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 
 const addTrade = asyncHandler(async (req, res) => {
     const userId = req.user._id;
+    const isEmailVerified = req.user.emailVerified;
     const {
         assetName,
         ticker,
@@ -20,6 +21,13 @@ const addTrade = asyncHandler(async (req, res) => {
         return res.status(404).json({
             success: false,
             message: "User not found. Please login to add a trade.",
+        });
+    }
+
+    if (!isEmailVerified) {
+        return res.status(403).json({
+            success: false,
+            message: "Email not verified. Please verify your email to add a trade.",
         });
     }
 
@@ -65,6 +73,7 @@ const addTrade = asyncHandler(async (req, res) => {
 
 const getTrades = asyncHandler(async (req, res) => {
     const userId = req.user._id;
+    const isEmailVerified = req.user.emailVerified;
 
     if (!userId) {
         return res.status(404).json({

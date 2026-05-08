@@ -20,6 +20,10 @@ const userSchema = new Schema(
             type: String,
             required: [true, "Password hash is required"],
         },
+        emailVerified: {
+            type: Boolean,
+            default: false,
+        },
         subscriptionStatus: {
             type: Boolean,
             default: false,

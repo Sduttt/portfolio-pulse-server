@@ -9,6 +9,8 @@ import {
     updateUserProfile,
     updateAvatar,
     deleteUser,
+    sendVerificationEmail,
+    verifyEmail,
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyAccessToken } from "../middlewares/auth.middleware.js";
@@ -16,6 +18,9 @@ import { verifyAccessToken } from "../middlewares/auth.middleware.js";
 const router = Router();
 
 router.route("/register").post(upload.single("avatar"), registerUser);
+
+router.route("/send-verification-email").post(sendVerificationEmail);
+router.route("/verify-email").get(verifyEmail);
 
 router.route("/login").post(loginUser);
 

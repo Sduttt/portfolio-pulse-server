@@ -28,7 +28,7 @@ const analysisSchema = new Schema(
         },
         users_feedback: {
             type: String,
-        }
+        },
     },
     {
         timestamps: true,
