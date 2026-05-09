@@ -1,7 +1,48 @@
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import swaggerUi from "swagger-ui-express";
+import swaggerJsdoc from "swagger-jsdoc";
 import { handleStripeWebhook } from "./controllers/subscription.controller.js";
+
+const swaggerSpec = swaggerJsdoc({
+    definition: {
+        openapi: "3.0.0",
+        info: {
+            title: "Portfolio Pulse API",
+            version: "1.0.0",
+            description:
+                "AI-enhanced backend for tracking and analysing your trading portfolio.",
+        },
+        servers: [{ url: "/api/v1" }],
+        components: {
+            securitySchemes: {
+                bearerAuth: {
+                    type: "http",
+                    scheme: "bearer",
+                    bearerFormat: "JWT",
+                },
+            },
+            schemas: {
+                Error: {
+                    type: "object",
+                    properties: {
+                        success: { type: "boolean", example: false },
+                        message: { type: "string" },
+                    },
+                },
+                Success: {
+                    type: "object",
+                    properties: {
+                        success: { type: "boolean", example: true },
+                        message: { type: "string" },
+                    },
+                },
+            },
+        },
+    },
+    apis: ["./src/routes/*.js"],
+});
 
 const app = express();
 
@@ -23,6 +64,8 @@ app.use(express.json({ limit: "16kb" }));
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(express.static("public"));
 app.use(cookieParser());
+
+app.use("/", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Route Imports
 
@@ -50,3 +93,4 @@ app.use((err, req, res, next) => {
 });
 
 export { app };
+export default app;
