@@ -11,6 +11,8 @@ import {
     deleteUser,
     sendVerificationEmail,
     verifyEmail,
+    forgotPassword,
+    resetPassword,
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyAccessToken } from "../middlewares/auth.middleware.js";
@@ -91,6 +93,52 @@ router.route("/send-verification-email").post(sendVerificationEmail);
  *         description: Invalid or expired token
  */
 router.route("/verify-email").get(verifyEmail);
+
+/**
+ * @openapi
+ * /user/forgot-password:
+ *   post:
+ *     summary: Forgot password
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email]
+ *             properties:
+ *               email: { type: string, format: email }
+ *     responses:
+ *       200:
+ *         description: Password reset email sent
+ *       404:
+ *         description: User not found
+ */
+router.route("/forgot-password").post(forgotPassword);
+
+/**
+ * @openapi
+ * /user/reset-password:
+ *   post:
+ *     summary: Reset password
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [password]
+ *             properties:
+ *               password: { type: string, format: password }
+ *     responses:
+ *       200:
+ *         description: Password reset successfully
+ *       404:
+ *         description: User not found
+ */
+router.route("/reset-password").post(resetPassword);
 
 /**
  * @openapi

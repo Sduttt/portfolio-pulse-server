@@ -39,7 +39,9 @@ const registerUser = asyncHandler(async (req, res) => {
         profession,
         bio,
         dateOfBirth,
+        dob,
         gender,
+        portfolioSizeInINR,
     } = req.body;
     const address =
         typeof req.body.address === "string"
@@ -69,7 +71,7 @@ const registerUser = asyncHandler(async (req, res) => {
             success: false,
             message: "Profession is required",
         });
-    } else if (!dateOfBirth) {
+    } else if (!dateOfBirth && !dob) {
         return res.status(400).json({
             success: false,
             message: "Date of birth is required",
@@ -101,6 +103,19 @@ const registerUser = asyncHandler(async (req, res) => {
         });
     }
 
+    const dobValue = dob || dateOfBirth;
+    if (dobValue) {
+        const userDob = new Date(dobValue);
+        const eighteenYearsAgo = new Date();
+        eighteenYearsAgo.setFullYear(eighteenYearsAgo.getFullYear() - 18);
+        if (userDob > eighteenYearsAgo) {
+            return res.status(400).json({
+                success: false,
+                message: "You must be at least 18 years old.",
+            });
+        }
+    }
+
     // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -128,8 +143,9 @@ const registerUser = asyncHandler(async (req, res) => {
         avatar: avatarUrl,
         profession,
         bio,
-        dateOfBirth,
+        dob: dob || dateOfBirth,
         gender,
+        portfolioSizeInINR,
         address: {
             city,
             country,
@@ -269,6 +285,7 @@ const loginUser = asyncHandler(async (req, res) => {
     const cookieOptions = {
         httpOnly: true,
         secure: true,
+        sameSite: "none",
     };
 
     return res
@@ -304,6 +321,7 @@ const logoutUser = asyncHandler(async (req, res) => {
     const cookieOptions = {
         httpOnly: true,
         secure: true,
+        sameSite: "none",
     };
 
     return res
@@ -347,6 +365,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         const cookiesOptions = {
             httpOnly: true,
             secure: true,
+            sameSite: "none",
         };
 
         const { accessToken, newRefreshToken } =
@@ -442,8 +461,29 @@ const getUserProfile = asyncHandler(async (req, res) => {
 });
 
 const updateUserProfile = asyncHandler(async (req, res) => {
-    const { fullName, profession, bio, dateOfBirth, gender, address } =
-        req.body;
+    const {
+        fullName,
+        profession,
+        bio,
+        dateOfBirth,
+        dob,
+        gender,
+        portfolioSizeInINR,
+        address,
+    } = req.body;
+
+    const dobValue = dob || dateOfBirth;
+    if (dobValue) {
+        const userDob = new Date(dobValue);
+        const eighteenYearsAgo = new Date();
+        eighteenYearsAgo.setFullYear(eighteenYearsAgo.getFullYear() - 18);
+        if (userDob > eighteenYearsAgo) {
+            return res.status(400).json({
+                success: false,
+                message: "Date of birth must be at least 18 years ago.",
+            });
+        }
+    }
 
     const user = await User.findByIdAndUpdate(
         req.user._id,
@@ -452,8 +492,9 @@ const updateUserProfile = asyncHandler(async (req, res) => {
                 fullName,
                 profession,
                 bio,
-                dateOfBirth,
+                dob: dob || dateOfBirth,
                 gender,
+                portfolioSizeInINR,
                 address,
             },
         },
@@ -538,6 +579,7 @@ const deleteUser = asyncHandler(async (req, res) => {
     const cookieOptions = {
         httpOnly: true,
         secure: true,
+        sameSite: "none",
     };
 
     return res
@@ -547,6 +589,96 @@ const deleteUser = asyncHandler(async (req, res) => {
         .json({
             success: true,
             message: "User deleted successfully",
+            data: user,
+        });
+});
+
+const forgotPassword = asyncHandler(async (req, res) => {
+    const { email } = req.body;
+    if (!email) {
+        return res.status(400).json({
+            success: false,
+            message: "Email is required",
+        });
+    }
+    const user = await User.findOne({ email });
+    if (!user) {
+        return res.status(404).json({
+            success: false,
+            message: "User not found",
+        });
+    }
+    const token = jwt.sign(
+        { userId: user._id },
+        process.env.EMAIL_VERIFICATION_SECRET,
+        { expiresIn: "1h" },
+    );
+
+    const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+    const emailSubject = "Reset your password for Portfolio Pulse";
+    const emailText = `Please reset your password by clicking the following link: ${resetLink}`;
+    const emailHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 0; border-radius: 10px;">
+            <div style="background: white; margin: 20px; padding: 40px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                <h2 style="color: #333; margin-bottom: 10px; font-size: 24px;">Password Reset Request</h2>
+                <p style="color: #666; font-size: 14px; margin-bottom: 30px; line-height: 1.6;">We received a request to reset your password. Click the button below to choose a new password.</p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="${resetLink}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 40px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; transition: opacity 0.3s;">Reset Password</a>
+                </div>
+                <p style="color: #999; font-size: 12px; margin: 30px 0 0 0; padding-top: 30px; border-top: 1px solid #eee; line-height: 1.6;">
+                    If you didn't request a password reset, you can safely ignore this email. This link will expire in 1 hour.<br>
+                    <strong>Link:</strong> <a href="${resetLink}" style="color: #667eea; text-decoration: none; word-break: break-all;">${resetLink}</a>
+                </p>
+            </div>
+        </div>
+    `;
+
+    await sendEmail(user.email, emailSubject, emailText, emailHtml);
+
+    const cookieOptions = {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+    };
+    return res
+        .status(200)
+        .cookie("verificationToken", token, cookieOptions)
+        .json({
+            success: true,
+            message: "Password reset email sent successfully",
+        });
+});
+
+const resetPassword = asyncHandler(async (req, res) => {
+    const { token } = req.query;
+    const { password } = req.body;
+    if (!password) {
+        return res.status(400).json({
+            success: false,
+            message: "Password is required",
+        });
+    }
+    const decoded = jwt.verify(token, process.env.EMAIL_VERIFICATION_SECRET);
+    const user = await User.findById(decoded.userId);
+    if (!user) {
+        return res.status(404).json({
+            success: false,
+            message: "User not found",
+        });
+    }
+    user.passwordHash = password;
+    await user.save();
+    const cookieOptions = {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+    };
+    return res
+        .status(200)
+        .clearCookie("verificationToken", cookieOptions)
+        .json({
+            success: true,
+            message: "Password reset successfully",
             data: user,
         });
 });
@@ -586,7 +718,8 @@ const verifyEmail = asyncHandler(async (req, res) => {
         await user.save({ validateBeforeSave: false });
 
         // Send welcome/verified confirmation email (non-blocking)
-        const welcomeSubject = "Your email has been verified — Welcome to Portfolio Pulse!";
+        const welcomeSubject =
+            "Your email has been verified — Welcome to Portfolio Pulse!";
         const welcomeText = `Hi ${user.fullName}, your email has been verified successfully. You can now subscribe and start using AI-powered trade analysis.`;
         const welcomeHtml = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f9f9f9; padding: 40px 20px;">
@@ -634,7 +767,11 @@ const verifyEmail = asyncHandler(async (req, res) => {
             </div>
         `;
         sendEmail(user.email, welcomeSubject, welcomeText, welcomeHtml).catch(
-            (err) => console.error("Failed to send verification confirmed email:", err)
+            (err) =>
+                console.error(
+                    "Failed to send verification confirmed email:",
+                    err,
+                ),
         );
 
         return res.status(200).json({
@@ -653,6 +790,8 @@ export {
     registerUser,
     sendVerificationEmail,
     verifyEmail,
+    forgotPassword,
+    resetPassword,
     loginUser,
     logoutUser,
     refreshAccessToken,

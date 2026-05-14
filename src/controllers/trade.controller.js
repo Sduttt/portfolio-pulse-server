@@ -1,6 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { Trade } from "../models/trade.model.js";
 import { Analysis } from "../models/analysis.model.js";
+import { User } from "../models/user.model.js";
 import mongoose from "mongoose";
 
 const addTrade = asyncHandler(async (req, res) => {
@@ -47,6 +48,13 @@ const addTrade = asyncHandler(async (req, res) => {
         });
     }
 
+    if (new Date(tradeDate) > new Date()) {
+        return res.status(400).json({
+            success: false,
+            message: "Trade date cannot be in the future.",
+        });
+    }
+
     const newTrade = await Trade.create({
         userId,
         assetName,
@@ -65,6 +73,13 @@ const addTrade = asyncHandler(async (req, res) => {
             message: "Failed to add trade. Please try again.",
         });
     }
+
+    const tradeAmount = Number(quantity) * Number(pricePerUnit);
+    const amountToChange = tradeType === "Buy" ? tradeAmount : -tradeAmount;
+
+    await User.findByIdAndUpdate(userId, {
+        $inc: { portfolioSizeInINR: amountToChange },
+    });
 
     res.status(201).json({
         success: true,
@@ -153,6 +168,13 @@ const updateTrade = asyncHandler(async (req, res) => {
         });
     }
 
+    if (tradeDate && new Date(tradeDate) > new Date()) {
+        return res.status(400).json({
+            success: false,
+            message: "Trade date cannot be in the future.",
+        });
+    }
+
     if (!mongoose.isValidObjectId(tradeId)) {
         return res.status(400).json({
             success: false,
@@ -171,6 +193,9 @@ const updateTrade = asyncHandler(async (req, res) => {
         });
     }
 
+    const oldAmount = Number(trade.quantity) * Number(trade.pricePerUnit);
+    const revertAmount = trade.tradeType === "Buy" ? -oldAmount : oldAmount;
+
     trade.assetName = assetName || trade.assetName;
     trade.ticker = ticker || trade.ticker;
     trade.tradeType = tradeType || trade.tradeType;
@@ -181,6 +206,19 @@ const updateTrade = asyncHandler(async (req, res) => {
     trade.reason = reason || trade.reason;
 
     const updatedTrade = await trade.save();
+
+    const newAmount =
+        Number(updatedTrade.quantity) * Number(updatedTrade.pricePerUnit);
+    const applyAmount =
+        updatedTrade.tradeType === "Buy" ? newAmount : -newAmount;
+
+    const amountDifference = revertAmount + applyAmount;
+
+    if (amountDifference !== 0) {
+        await User.findByIdAndUpdate(userId, {
+            $inc: { portfolioSizeInINR: amountDifference },
+        });
+    }
 
     res.status(200).json({
         success: true,
@@ -216,6 +254,14 @@ const deleteTrade = asyncHandler(async (req, res) => {
                 "Trade not found. Please check the trade ID and try again.",
         });
     }
+
+    const tradeAmount = Number(trade.quantity) * Number(trade.pricePerUnit);
+    const amountToChange =
+        trade.tradeType === "Buy" ? -tradeAmount : tradeAmount;
+
+    await User.findByIdAndUpdate(userId, {
+        $inc: { portfolioSizeInINR: amountToChange },
+    });
 
     await Analysis.deleteMany({ tradeId: trade._id });
     await Trade.deleteOne({ _id: tradeId, userId });

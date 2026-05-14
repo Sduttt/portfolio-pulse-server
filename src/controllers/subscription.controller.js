@@ -6,7 +6,11 @@ import sendEmail from "../utils/emailconfig.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-const sendSubscriptionConfirmationEmail = async (user, periodStart, periodEnd) => {
+const sendSubscriptionConfirmationEmail = async (
+    user,
+    periodStart,
+    periodEnd,
+) => {
     const formatDate = (date) =>
         new Date(date).toLocaleDateString("en-US", {
             year: "numeric",
@@ -236,7 +240,9 @@ const verifyCheckoutSession = asyncHandler(async (req, res) => {
             req.user,
             new Date(periodStart * 1000),
             new Date(periodEnd * 1000),
-        ).catch((err) => console.error("Failed to send subscription email:", err));
+        ).catch((err) =>
+            console.error("Failed to send subscription email:", err),
+        );
     }
 
     return res.status(200).json({
@@ -309,7 +315,12 @@ const handleStripeWebhook = async (req, res) => {
                         user,
                         new Date(periodStart * 1000),
                         new Date(periodEnd * 1000),
-                    ).catch((err) => console.error("Failed to send subscription email:", err));
+                    ).catch((err) =>
+                        console.error(
+                            "Failed to send subscription email:",
+                            err,
+                        ),
+                    );
                 }
             });
             break;

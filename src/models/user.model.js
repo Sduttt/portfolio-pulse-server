@@ -49,6 +49,10 @@ const userSchema = new Schema(
             enum: ["male", "female", "other"],
             required: [true, "Gender is required"],
         },
+        portfolioSizeInINR: {
+            type: Number,
+            default: 0,
+        },
         address: {
             city: {
                 type: String,

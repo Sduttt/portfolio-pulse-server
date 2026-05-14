@@ -25,7 +25,6 @@ const analyzeTradeById = asyncHandler(async (req, res) => {
     }
 
     // Return cached analysis if it already exists for this trade
-    
 
     let aiResult;
     try {
@@ -54,7 +53,7 @@ const analyzeTradeById = asyncHandler(async (req, res) => {
             { userId, sentiment, rationalityScore, ai_feedback: feedback },
             { new: true },
         );
-        
+
         return res.status(200).json({
             success: true,
             cached: true,

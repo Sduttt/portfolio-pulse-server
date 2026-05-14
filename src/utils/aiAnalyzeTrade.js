@@ -20,6 +20,7 @@ export const analyzeTrade = async (trade) => {
         - Quantity: ${trade.quantity}
         - Price per unit: ${trade.pricePerUnit} ${trade.currency}
         - Trade date: ${trade.tradeDate}
+        - Total Portfolio size in INR: ${trade.portfolioSizeInINR}
         - Reason given by trader: "${trade.reason || "No reason provided"}"`;
 
     const prompt = `You are a financial behavior analyst. Analyze the following trade and respond ONLY with a valid JSON object — no markdown, no explanation, no extra text.
@@ -58,18 +59,27 @@ export const analyzeTrade = async (trade) => {
                 messages: [
                     {
                         role: "system",
-                        content: `You are a financial behavior analyst. Respond ONLY with valid JSON. Your response MUST perfectly match this exact structure: 
-                        {
-                            "sentiment": "<one of: Rational, Emotional, FOMO, Panic, Greed, Fear>",
-                            "rationalityScore": <integer between 0 and 100>,
-                            "feedback": "<honest behavioral feedback in 150 words or fewer>"
-                        }`,
+                        content: `You are an elite Financial Behavior Analyst and Risk Strategist. Respond ONLY with valid JSON. Your response MUST perfectly match this exact structure: 
+            {
+                "sentiment": "<one of: Rational, Emotional, FOMO, Panic, Greed, Fear>",
+                "rationalityScore": <integer between 0 and 100>,
+                "feedback": "<honest behavioral feedback in 150 words or fewer>"
+            }
+            Do not include markdown outside the JSON object. You must format the 'feedback' value as a single string containing a point-by-point list using dashes (e.g., '- Point 1\\n- Point 2').`,
                     },
                     {
                         role: "user",
-                        content: `Analyze the following trade and respond ONLY with a valid JSON object — no markdown, no explanation, no extra text.
+                        content: `Analyze the following trade details and respond ONLY with the required JSON object.
 
-                        \n\n${tradeDetails}\n\n`,
+                        In your 'feedback' string, you MUST provide a point-by-point explanation covering:
+                            - Position Sizing: Evaluate the personal risk level based on the percentage of their portfolio allocated to this specific trade.
+                            - Market Context: Critique their entry/exit logic against current global macroeconomic conditions (consider prevailing inflation rates, central bank policies, geopolitical tensions, and sector-specific volatility).
+                            - Behavioral Bias: Identify the primary psychological driver behind this trade.
+
+                            Keep the feedback concise, direct, and strictly under 150 words.
+
+                        Trade Details:
+                        ${tradeDetails}`,
                     },
                 ],
                 model: "llama-3.3-70b-versatile",
